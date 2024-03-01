@@ -1,10 +1,10 @@
+# app/models/concerns/moderable.rb
 module Moderable
   extend ActiveSupport::Concern
 
   included do
     before_save :moderate_attributes
     attribute :is_accepted, :boolean, default: true
-    attribute :quality_score, :integer, default: 0
   end
 
   class_methods do
@@ -22,13 +22,14 @@ module Moderable
       content = send(attribute)
       next if content.blank?
 
-      moderation_result = ModerationService.evaluate(content)
-      self.is_accepted = moderation_result[:is_accepted]
-      self.quality_score = moderation_result[:score]
+      response = ModerationService.check(content)
+      self.is_accepted = response[:is_accepted]
 
-      if self.quality_score < 3
-        # Marquer pour révision manuelle, par exemple
-        self.needs_review = true
+      unless self.is_accepted
+        # Si le contenu est rejeté, vous pouvez choisir de ne pas sauvegarder le commentaire,
+        # de le marquer pour révision, ou de prendre une autre action appropriée.
+        # Par exemple, annuler la sauvegarde :
+        throw :abort
       end
     end
   end

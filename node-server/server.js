@@ -7,20 +7,39 @@ const port = 3000;
 
 app.use(bodyParser.json());
 
-// Utiliser des routes spécifiques pour la modération depuis le fichier moderationRoutes
-const moderationRoutes = require('./routes/moderationRoutes');
-app.use('/api/moderation', moderationRoutes);
+// Endpoint pour la prédiction
+app.get('/api/moderation/predict', async (req, res) => {
+  const { text } = req.query;
 
-// Exemple de route dans Node.js pour la modération
-app.post('/moderate', async (req, res) => {
-  const { text } = req.body;
   try {
-    const response = await axios.post('https://moderation.logora.fr/predict', {
-      text: text,
+    const response = await axios.get('https://moderation.logora.fr/predict', {
+      params: {
+        text: text,
+      },
     });
+
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: 'Erreur lors de la modération' });
+    console.error(error);
+    res.status(500).json({ error: 'Erreur lors de la prédiction' });
+  }
+});
+
+// Endpoint pour le score
+app.get('/api/moderation/score', async (req, res) => {
+  const { text } = req.query;
+
+  try {
+    const response = await axios.get('https://moderation.logora.fr/score', {
+      params: {
+        text: text,
+      },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur lors de l\'obtention du score de qualité' });
   }
 });
 
